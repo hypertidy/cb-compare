@@ -35,8 +35,8 @@ Approx mode: a cell is in if its centre is in.
 
 **Where the semantics differ.** Timings only mean something where outputs
 agree, so the differences are stated first. Each was found by reading both
-sources and confirmed by running cases (the earlier lattice and records
-reports, `~/cb-burnscars-diff/reports/` on the dev VM, to be folded in here):
+sources and confirmed by running cases (the case harnesses are to be
+folded into this repo):
 
 | | controlledburn-rs | burnscars | effect here |
 |---|---|---|---|
