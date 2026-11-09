@@ -7,8 +7,10 @@ lines and points onto a regular grid as sparse tables (interior runs plus
 boundary cells with exact coverage fractions, or the cell-centre rule), and
 both come from the controlledburn C++ core.
 
-The write-up is [WRITEUP.md](WRITEUP.md). Numbers and figures come from
-`results/summary.md` and `results/figures/`, which `run_all.sh` regenerates.
+**Read the [write-up](WRITEUP.md)**, which starts with a TL;DR of the
+pros and cons. Every number and figure is in the
+[results summary](results/summary.md) (tables with spread, and
+`results/figures/`), which `run_all.sh` regenerates.
 
 ## Run it
 

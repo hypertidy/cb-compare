@@ -4,6 +4,58 @@
 for each run are in `results/env.json`. Numbers quoted here are from the
 development VM until the Pawsey run replaces them.*
 
+## TL;DR
+
+*Provisional: from the quick run on the dev VM and the earlier
+chunks-comparison report, whose large-input figures (marked † below) are
+not rerun here yet. The Pawsey run will replace these numbers.*
+
+**Both give the same answer.** On valid input the two crates agree cell for
+cell, both match the exact answer on the rectangles, and parallel output
+equals serial output. They differ only on invalid polygons (one cell in
+73 M), near-ties at cell centres, and points exactly on cell edges. Neither
+crate defines behaviour for those (§2, §4).
+
+**Burn once, then slice** (controlledburn-rs)
+
+- **Pro:** the cost doesn't depend on how many tiles you cut. Slicing is
+  integer arithmetic over the records, and tiles are exact because nothing
+  is recomputed.
+- **Pro:** any tile size, or several tilings, come from the same burn.
+- **Pro:** for large polygons over many tiles, re-burning was 30–190×
+  slower †.
+- **Con:** the whole sparse output must be held in one place. For one huge
+  polygon, the peak memory during the burn can be many times the output's
+  size †.
+- **Con:** the parallelism is per geometry, so one huge geometry gets no
+  speedup (coast-1e5: none on 16 threads).
+
+**Re-burn each fixed tile** (burnscars' raster-parallel design)
+
+- **Pro:** there's no global step. Tiles are independent, which suits
+  distributed or lazy work, and memory per worker stays small.
+- **Pro:** it parallelizes even a single geometry. It was the fastest option
+  for coast-1e5 and for many small polygons †.
+- **Con:** the cost grows with vertices × tiles touched, so large polygons
+  over fine tiles get expensive. Sharing prepared edges across tiles is
+  still a TODO in burnscars.
+- **Con:** exact tiles need deliberate lattice rules. burnscars has them;
+  burn-once doesn't need them.
+
+**The engines themselves:**
+
+- controlledburn-rs is faster in approx mode, about 1.4–3.6× on these
+  inputs.
+- burnscars is about 1.8× faster serially in coverage mode on the rock
+  outcrops and rectangles. The likely cause is per-polygon allocation in
+  controlledburn-rs, but that is unconfirmed, and it is the clearest thing
+  to improve on that side.
+
+**In one line:** burn once and slice suits large or complex geometry and
+arbitrary tilings. Re-burning per tile suits many small geometries, tight
+memory per worker and workers with no shared state. A hybrid also works:
+burn in parallel by geometry, then route each worker's records to tiles.
+
 ## 1. Purpose
 
 controlledburn-rs and burnscars solve the same problem: rasterize vector
