@@ -4,11 +4,14 @@
 # and <key>.rss (peak RSS, KB, of the whole process). Existing results are
 # skipped, so a run can be resumed or split across jobs.
 #   run_plan.sh <plan.tsv> [FIRST [LAST]]
+# Env: CBCMP_INPUTS, CBCMP_RESULTS, CBCMP_BIN override the repo-relative
+# defaults (the container keeps code and inputs read-only, results bound in).
 set -euo pipefail
 HERE=$(cd "$(dirname "$0")/.." && pwd)
 PLAN=$1; FIRST=${2:-1}; LAST=${3:-999999}
-BIN=$HERE/harness/target/release/timing
-OUT=$HERE/results/timing; mkdir -p "$OUT"
+INPUTS=${CBCMP_INPUTS:-$HERE/inputs}
+BIN=${CBCMP_BIN:-$HERE/harness/target/release}/timing
+OUT=${CBCMP_RESULTS:-$HERE/results}/timing; mkdir -p "$OUT"
 n=0
 while IFS=$'\t' read -r input mode strat threads tile reps; do
   n=$((n+1)); [ "$n" -lt "$FIRST" ] && continue; [ "$n" -gt "$LAST" ] && break
@@ -16,6 +19,6 @@ while IFS=$'\t' read -r input mode strat threads tile reps; do
   [ -s "$OUT/$key.jsonl" ] && continue
   echo "[$n] $key" >&2
   /usr/bin/time -f "%M" -o "$OUT/$key.rss" \
-    "$BIN" "$input" "$HERE/inputs" "$mode" "$strat" "$threads" "$tile" "$reps" > "$OUT/$key.jsonl.tmp"
+    "$BIN" "$input" "$INPUTS" "$mode" "$strat" "$threads" "$tile" "$reps" > "$OUT/$key.jsonl.tmp"
   mv "$OUT/$key.jsonl.tmp" "$OUT/$key.jsonl"
 done < "$PLAN"

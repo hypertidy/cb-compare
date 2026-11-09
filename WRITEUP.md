@@ -178,9 +178,10 @@ so this section will show the variation rather than a single speedup.*
 
 `./run_all.sh` regenerates every number and figure. The engines are pinned
 by commit and the toolchain by `rust-toolchain.toml`, and the rock outcrop
-data is pinned by checksum. `Dockerfile` gives the same environment without
-any local setup, and `pawsey/setonix.slurm` runs the full plan on an
-exclusive node. Results record the machine and versions in
+data is pinned by checksum. The image `ghcr.io/hypertidy/cb-compare` (built
+by CI from `Dockerfile`) holds the compiled harness and the prepared
+inputs, and runs read-only with only a results directory bound in.
+`pawsey/setonix.slurm` runs the full plan from it on an exclusive node. Results record the machine and versions in
 `results/env.json`.
 
 ## 7. Limits and caveats

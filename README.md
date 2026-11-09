@@ -14,24 +14,28 @@ pros and cons. Every number and figure is in the
 
 ## Run it
 
-```sh
-./run_all.sh --quick     # small inputs, a few minutes: a smoke test
-./run_all.sh             # the full plan; meant for a dedicated node
-```
-
-Or in the container (Rust 1.99.1, GDAL, matplotlib):
+The container holds everything, already built, with the inputs prepared. It
+runs read-only and writes only to the results directory you bind in:
 
 ```sh
-docker build -t cb-compare .
-docker run --rm -v "$PWD":/w -w /w cb-compare ./run_all.sh --quick
+docker run --rm --read-only --tmpfs /tmp -e PLAN_ARGS=--quick \
+  -v "$PWD/results":/results ghcr.io/hypertidy/cb-compare     # a smoke test, minutes
+docker run --rm --read-only --tmpfs /tmp \
+  -v "$PWD/results":/results ghcr.io/hypertidy/cb-compare     # the full plan
 ```
 
-On Pawsey Setonix, see `pawsey/setonix.slurm`.
+On HPC, with Singularity/Apptainer, see [pawsey/RUNSHEET.md](pawsey/RUNSHEET.md).
 
-`run_all.sh` builds the harness, writes the synthetic inputs, downloads and
-checks the rock outcrop polygons (`data/SHA256SUMS`), runs the correctness
-checks, then runs the timing plan one configuration per process and writes
-the summary. Finished configurations are skipped, so a run can be resumed.
+From source instead (Rust 1.99.1, python3 with GDAL bindings and matplotlib):
+
+```sh
+./run_all.sh --quick
+./run_all.sh
+```
+
+Each run builds or reuses the inputs, runs the correctness checks, runs the
+timing plan one configuration per process and writes the summary. Finished
+configurations are skipped, so a run can be resumed.
 
 ## Layout
 
@@ -43,9 +47,11 @@ the summary. Finished configurations are skipped, so a run can be resumed.
 | `harness/src/bin/timing.rs` | one timed configuration per process |
 | `scripts/prepare_rock.py` | rock outcrop polygons and the REMA v2 grids |
 | `scripts/plan.py` | the experiment design: every configuration that is timed |
+| `scripts/job.sh` | plan, correctness, timing, summary (what the container runs) |
 | `scripts/run_plan.sh` | runs a plan (or a slice of it), with peak RSS per configuration |
 | `scripts/summarise.py` | tables and figures |
-| `pawsey/setonix.slurm` | the full plan on an exclusive Setonix node |
+| `Dockerfile`, `.github/workflows/image.yml` | the image, published to `ghcr.io/hypertidy/cb-compare` |
+| `pawsey/setonix.slurm`, `pawsey/RUNSHEET.md` | the full plan on an exclusive Setonix node, via Singularity |
 
 ## Adding a case
 

@@ -1,0 +1,5 @@
+harness/target
+inputs
+results
+data/*.zip
+.git
