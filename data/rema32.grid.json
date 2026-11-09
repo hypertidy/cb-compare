@@ -1,0 +1,10 @@
+{
+ "xmin": -2700096.0,
+ "ymax": 3342080.0,
+ "xmax": 2750080.0,
+ "ymin": -2500096.0,
+ "ncol": 170318,
+ "nrow": 182568,
+ "crs": "EPSG:3031",
+ "source": "/vsicurl/https://raw.githubusercontent.com/mdsumner/rema-ovr/main/rema-vrt/32m_dem_tiles.vrt"
+}

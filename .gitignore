@@ -1,0 +1,7 @@
+harness/target/
+inputs/
+data/*.zip
+results/timing/
+results/verify/
+results/*.log
+results/plan.tsv

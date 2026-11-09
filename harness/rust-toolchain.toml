@@ -1,0 +1,5 @@
+# burnscars 1d24ef7 pins 1.99.1 (rust-version 1.98); controlledburn-rs
+# needs 1.70+. One toolchain builds both.
+[toolchain]
+channel = "1.99.1"
+profile = "minimal"
