@@ -1,14 +1,11 @@
 # Sparse rasterization in Rust: controlledburn-rs and burnscars, compared
 
-*Draft. The numbers come from `results/summary.md`; the machine and versions
-for each run are in `results/env.json`. Numbers quoted here are from the
-development VM until the Pawsey run replaces them.*
+*The numbers come from `results/summary.md`, a full run on one exclusive
+Pawsey Setonix node (2 × AMD EPYC 7763, 128 cores, 256 logical CPUs,
+250 GB; Slurm job 52637376). `results/env.json` records the machine and
+versions.*
 
 ## TL;DR
-
-*Provisional: from the quick run on the dev VM and the earlier
-chunks-comparison report, whose large-input figures (marked † below) are
-not rerun here yet. The Pawsey run will replace these numbers.*
 
 **Both give the same answer.** On valid input the two crates agree cell for
 cell, both match the exact answer on the rectangles, and parallel output
@@ -18,43 +15,61 @@ crate defines behaviour for those (§2, §4).
 
 **Burn once, then slice** (controlledburn-rs)
 
-- **Pro:** the cost doesn't depend on how many tiles you cut. Slicing is
+- **Pro:** the cost hardly depends on how many tiles you cut. Slicing is
   integer arithmetic over the records, and tiles are exact because nothing
-  is recomputed.
+  is recomputed. Cutting rock-32m into 7,560 tiles with `slice_tiles` takes
+  0.019 s, against 5.5 s for one `crop()` per tile.
 - **Pro:** any tile size, or several tilings, come from the same burn.
-- **Pro:** for large polygons over many tiles, re-burning was 30–190×
-  slower †.
-- **Con:** the whole sparse output must be held in one place. For one huge
-  polygon, the peak memory during the burn can be many times the output's
-  size †.
+- **Pro:** for one large polygon over many tiles, it wins clearly on few
+  threads. On coast-1e6 (one 10⁶-vertex ring) at 1 thread, re-burning
+  256-cell tiles took 461 s and burn-once 13 s (35×).
 - **Con:** the parallelism is per geometry, so one huge geometry gets no
-  speedup (coast-1e5: none on 16 threads).
+  speedup: coast-1e5 and coast-1e6 run at 1.0× on 128 threads.
+- **Con:** the slice is serial. At 128 threads it is most of the time
+  (rock-32m coverage: 0.08 s burn, 0.20 s slice). Making the slice parallel
+  is the clearest thing to improve.
 
 **Re-burn each fixed tile** (burnscars' raster-parallel design)
 
 - **Pro:** there's no global step. Tiles are independent, which suits
-  distributed or lazy work, and memory per worker stays small.
-- **Pro:** it parallelizes even a single geometry. It was the fastest option
-  for coast-1e5 and for many small polygons †.
-- **Con:** the cost grows with vertices × tiles touched, so large polygons
-  over fine tiles get expensive. Sharing prepared edges across tiles is
-  still a TODO in burnscars.
+  distributed or lazy work. For many small geometries the memory per
+  process stays small: 44 MB on rock-32m coverage at 1 thread (0.2–0.4 GB
+  at 128), against 0.3–0.9 GB to burn the whole grid.
+- **Pro:** it parallelizes even a single geometry. At 128 threads it was the
+  fastest strategy on the coastlines, rects, small-1e5, and the rock outcrops
+  at 128–32 m in coverage mode. On rock-32m coverage it took 0.04 s, against
+  0.2–0.3 s to burn and slice. On coast-1e6 with 4096-cell tiles it took
+  3.9 s, against 13 s. Burn-once stayed ahead on the coarse rock grids
+  (1024 m and 512 m) and on most of the rock runs in approx mode.
+- **Con:** the cost grows with vertices × tiles touched. On coast-1e6 at
+  128 threads it went from 3.9 s (4096-cell tiles) to 32.5 s (256-cell
+  tiles), while burn-once stayed at 13 s. Sharing prepared edges across
+  tiles is still a TODO in burnscars.
+- **Con:** for one huge geometry, memory grows with the threads: 33–75 GB
+  peak on coast-1e6 at 128 threads, against 13 GB for burn-once.
 - **Con:** exact tiles need deliberate lattice rules. burnscars has them;
   burn-once doesn't need them.
 
-**The engines themselves:**
+**The engines themselves (serial, whole grid):**
 
-- controlledburn-rs is faster in approx mode, about 1.4–3.6× on these
-  inputs.
-- burnscars is about 1.8× faster serially in coverage mode on the rock
-  outcrops and rectangles. The likely cause is per-polygon allocation in
-  controlledburn-rs, but that is unconfirmed, and it is the clearest thing
-  to improve on that side.
+- controlledburn-rs is faster in approx mode: 1.3–1.6× on the rock outcrops,
+  1.5–1.8× on rects and small-1e5, and 2.9–3.6× on the coastline rings.
+- burnscars is faster in coverage mode on many polygons: 1.3× (rock 1024 m),
+  growing to 2.2× (rock 32 m), and 2.0–2.3× on rects and small-1e5. On the
+  single coastline rings the two are level, with cb ahead by 2–12%.
+  The likely cause is per-polygon allocation in controlledburn-rs, but that
+  is unconfirmed.
+- Feature-parallel, controlledburn-rs scales further. Its best speedup is
+  19–23× on most many-polygon inputs (28× on small-1e5), against 9–17× for
+  burnscars. In coverage mode this about cancels burnscars'
+  serial lead (rock-32m at 128 threads: 0.088 s vs 0.082 s). In approx mode
+  cb ends about 2× ahead.
 
-**In one line:** burn once and slice suits large or complex geometry and
-arbitrary tilings. Re-burning per tile suits many small geometries, tight
-memory per worker and workers with no shared state. A hybrid also works:
-burn in parallel by geometry, then route each worker's records to tiles.
+**In one line:** burn once and slice suits large or complex geometry,
+arbitrary or repeated tilings, and small thread counts. Re-burning per tile
+suits a whole node, many small geometries, tight memory per worker and
+workers with no shared state. A hybrid also works: burn in parallel by
+geometry, then route each worker's records to tiles (a parallel slice).
 
 ## 1. Purpose
 
@@ -123,7 +138,8 @@ building a dense raster. It also checks:
 - each polygon's covered area against its planar area;
 - feature-parallel output against serial output, record for record.
 
-Results on the dev VM:
+Results on Setonix (identical to the earlier dev-VM run; verification is
+deterministic):
 
 - **rects:** both engines are bit-equal to the exact answer on all 3,070,060
   cells, and to each other. Both drop one cell whose true fraction (4.5e-7)
@@ -170,9 +186,69 @@ Every configuration runs in its own process: one warm-up run, then 5 timed
 repeats (2 in `--quick`). The summary reports the median with the minimum and
 maximum.
 
-*Findings go here once the Pawsey run is in. Expect them to depend on the
-input: one large ring and many small polygons pull in opposite directions,
-so this section will show the variation rather than a single speedup.*
+### Findings
+
+The results depend on the input, so they are grouped by the shape of the
+input rather than given as one speedup. Times are medians on the Setonix
+node.
+
+**One very large geometry** (coast-1e5 and coast-1e6, a single ring of
+10⁵ or 10⁶ vertices):
+
+- Feature-parallel burning gives nothing: both engines run at 1.0× from 2 to
+  128 threads. cb's approx burn of coast-1e6 gets slightly slower (0.9×),
+  and its peak RSS in coverage mode rises from 8.7 GB to 13 GB.
+- Serial whole-grid: cb coverage 12.9 s, bs 14.5 s; cb approx 1.06 s, bs
+  3.76 s (3.5×). Serial peak RSS is 8.7 GB for cb and 12.5 GB for bs in
+  coverage, and 1.3 GB and 2.7 GB in approx.
+- Re-burning per tile is the only strategy here that uses the cores, and
+  its cost follows the number of tiles the ring touches. For coast-1e6
+  coverage:
+
+  | tile | tiles touched | re-burn, 1 thread | re-burn, 128 threads | burn + slice | re-burn RSS, 128 threads |
+  |---|---|---|---|---|---|
+  | 4096 | 16 | 33.8 s | 3.9 s | 13.2 s | 44 GB |
+  | 1024 | 178 | 117 s | 8.9 s | 13.1 s | 75 GB |
+  | 256 | 2,317 | 461 s | 32.5 s | 13.1 s | 33 GB |
+
+  With large tiles and a whole node, re-burning wins about 3×. With small
+  tiles burn-once wins, and at 1 thread it wins at every tile size (2.5–35×).
+
+**Many small and medium geometries** (rock outcrops at 1024 m to 32 m,
+small-1e5, rects):
+
+- Serial coverage favours bs, by 1.3× at 1024 m rising to 2.2× at 32 m
+  (rock-32m: cb 1.95 s, bs 0.88 s). Serial approx favours cb, by 1.3–1.6×
+  (rock-32m: cb 0.186 s, bs 0.305 s).
+- Feature-parallel, cb scales further. On rock-32m at 128 threads, coverage
+  takes cb 0.088 s (22×) and bs 0.082 s (11×), and approx takes cb 0.016 s
+  (12×) and bs 0.034 s (9×). Gains past 64 threads are small, and the
+  smallest runs (rects approx, rock 1024 m approx) get slower.
+- Tiles at 128 threads. On the fine grids re-burning wins in coverage mode:
+  rock-32m takes 0.035–0.043 s against 0.25–0.30 s for burn + slice, and
+  small-1e5 takes 0.065–0.080 s against 0.36–0.46 s at 256–1024-cell tiles. That
+  is because the serial slice is most of the burn-once time: 0.15–0.20 s of
+  rock-32m coverage. Burn-once is ahead on the coarse grids (1024 m, 512 m),
+  and in approx mode on the rock outcrops at 64 m and coarser; at 32 m
+  approx the two are level.
+- Tiles at 1 thread: in coverage mode, re-burning and bs_slice (both bs's
+  engine) are within about 10% of each other, and cb_slice takes about 2×
+  as long. In approx mode cb_slice is fastest, 1.6–2.5× ahead of
+  re-burning on rock-32m.
+- Memory: re-burning stays at 41–45 MB per process on the rock outcrops at
+  most settings; it rises to 0.1–0.4 GB at 128 threads on the fine grids.
+  Burn-once holds the whole output, 0.3–0.9 GB for rock-32m coverage.
+
+**Slicing:** `slice_tiles` cut rock-32m approx into 7,560 tiles in 0.019 s.
+A `crop()` per tile took 5.49 s on the same burn (280×).
+
+**What to improve:**
+
+- in controlledburn-rs, a parallel slice, and the serial coverage engine on
+  many polygons;
+- in burnscars, sharing prepared edges across tiles, which would cut the
+  re-burn cost on large geometries, and the memory of re-burning one huge
+  geometry on many threads.
 
 ## 6. Reproducibility
 
@@ -204,8 +280,8 @@ inputs, and runs read-only with only a results directory bound in.
 - **Measurement:**
   - Peak RSS is per process and includes the input bytes; it is not the
     memory of the burn alone.
-  - On a shared VM, timings have more spread than on an exclusive node. The
-    dev-VM numbers are for checking the pipeline, not for quoting.
+  - The quoted numbers come from one exclusive Setonix node. Other machines,
+    especially shared VMs, will differ and show more spread.
   - Feature-parallel grouping is by vertex count, which is a proxy for cost;
     a skewed input (one huge ring among many small ones) will not balance
     well.
