@@ -3,6 +3,7 @@
 # EPYC), inside the read-only cb-compare container. Nothing is built or
 # downloaded on the node. See pawsey/RUNSHEET.md.
 #
+# Usually submitted by pawsey/go.sh, which pulls the image and sets SIF/RESULTS.
 #   sbatch --account=<project> pawsey/setonix.slurm                 # whole plan
 #   sbatch --account=<project> --array=0-7 pawsey/setonix.slurm     # plan split in 8
 #   sbatch --account=<project> --time=00:30:00 --export=ALL,PLAN_ARGS=--quick pawsey/setonix.slurm
@@ -22,7 +23,7 @@ RESULTS=${RESULTS:-$PWD/results}
 mkdir -p "$RESULTS"
 # Setonix provides Singularity as a module; the exact name may change:
 # `module avail singularity`.
-command -v singularity >/dev/null || module load singularity/4.1.0-slurm
+command -v singularity >/dev/null || module load singularity/4.1.0-slurm || module load singularity
 
 # Variables for inside the container (SINGULARITYENV_/APPTAINERENV_ win over
 # the image's own environment).

@@ -51,7 +51,7 @@ configurations are skipped, so a run can be resumed.
 | `scripts/run_plan.sh` | runs a plan (or a slice of it), with peak RSS per configuration |
 | `scripts/summarise.py` | tables and figures |
 | `Dockerfile`, `.github/workflows/image.yml` | the image, published to `ghcr.io/hypertidy/cb-compare` |
-| `pawsey/setonix.slurm`, `pawsey/RUNSHEET.md` | the full plan on an exclusive Setonix node, via Singularity |
+| `pawsey/go.sh`, `pawsey/setonix.slurm`, `pawsey/RUNSHEET.md` | the full plan on an exclusive Setonix node, via Singularity, run by hand from a checkout |
 
 ## Adding a case
 

@@ -4,6 +4,10 @@ A brief for picking this work up in a fresh session on a machine that can
 `ssh setonix` (for example a Nectar VM in the Pawsey zone). Read this, then
 `pawsey/RUNSHEET.md`, then `WRITEUP.md` (its TL;DR first).
 
+**Manual route (preferred):** on a Setonix login node, `git pull` this repo
+and follow `pawsey/RUNSHEET.md`, where `pawsey/go.sh check|quick|full|status|pack`
+does each step. The steps below are the same, done by hand.
+
 ## What this is
 
 A reproducible comparison of two Rust crates for sparse polygon
