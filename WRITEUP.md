@@ -90,7 +90,7 @@ It reports what was measured; it does not pick a winner.
 
 | crate | commit | notes |
 |---|---|---|
-| controlledburn-rs | `56ba259` (hypertidy/controlledburn-rs#25, `slice_tiles`) | |
+| controlledburn-rs | `56ba259` (hypertidy/controlledburn-rs#25, `slice_tiles`) | the Setonix run in `results/`; the harness now pins `e1696fc` (#30, `slice_tiles_par`), not yet run on Setonix |
 | burnscars | `1d24ef7` | |
 
 Both are built with Rust 1.99.1 (burnscars' pin) in release mode, from the
@@ -244,8 +244,9 @@ A `crop()` per tile took 5.49 s on the same burn (280×).
 
 **What to improve:**
 
-- in controlledburn-rs, a parallel slice, and the serial coverage engine on
-  many polygons;
+- in controlledburn-rs, a parallel slice (done since this run, #30: `cb_slice`
+  now slices on its thread count), and the serial
+  coverage engine on many polygons;
 - in burnscars, sharing prepared edges across tiles, which would cut the
   re-burn cost on large geometries, and the memory of re-burning one huge
   geometry on many threads.

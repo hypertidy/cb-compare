@@ -47,7 +47,7 @@ dependencies = [
 [[package]]
 name = "controlledburn"
 version = "0.2.4"
-source = "git+https://github.com/hypertidy/controlledburn-rs?rev=56ba2596e1d0634d190834cc0958af4bcbed4d09#56ba2596e1d0634d190834cc0958af4bcbed4d09"
+source = "git+https://github.com/hypertidy/controlledburn-rs?rev=e1696fc543e6dbbe05b586544b50cde28072aff2#e1696fc543e6dbbe05b586544b50cde28072aff2"
 
 [[package]]
 name = "crossbeam-deque"

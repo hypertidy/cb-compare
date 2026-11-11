@@ -10,7 +10,9 @@
 //!   cb_par, bs_par          feature-parallel whole-grid burn, concatenated
 //!   cb_slice, bs_slice      whole-grid burn (feature-parallel when threads > 1),
 //!                           then a one-pass slice into tiles; burn and slice
-//!                           are timed separately
+//!                           are timed separately. cb slices on `threads`
+//!                           threads (slice_tiles_par; serial at 1 thread),
+//!                           bs's slice is serial
 //!   bs_reburn               fixed tiles: each tile burns the geometries whose
 //!                           bbox meets it onto grid.window(tile), in parallel
 //!                           over tiles (bucketing timed separately)
@@ -61,7 +63,7 @@ fn main() {
                 let r = if threads > 1 { cb_par(&wkbs, &gc, mode, ngroups) } else { cb_burn(&wkbs, &gc, mode) };
                 let burn_s = secs(t0);
                 let t1 = Instant::now();
-                let tiles = controlledburn::slice_tiles(&r, &gc, tile, tile);
+                let tiles = controlledburn::slice_tiles_par(&r, &gc, tile, tile, threads);
                 let n: usize = tiles.iter().map(|t| cb_records(&t.result)).sum();
                 serde_json::json!({"burn_s": burn_s, "slice_s": secs(t1), "records": n, "tiles_nonempty": tiles.len()})
             }
