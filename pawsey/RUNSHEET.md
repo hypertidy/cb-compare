@@ -37,7 +37,7 @@ pawsey/go.sh status      # while it runs, and after
 ```
 
 Check `$MYSCRATCH/cb-compare/slurm-*.log` and
-`$MYSCRATCH/cb-compare/results-quick/summary.md`. In `verify/*.json`, the
+`$MYSCRATCH/cb-compare/results-quick-sha-<commit>/summary.md`. In `verify/*.json`, the
 only `differ` or `only_*` cells should be the known ones in WRITEUP §4.
 
 ## 4. Full run (up to 12 h, 1 exclusive node)
@@ -47,9 +47,15 @@ pawsey/go.sh full                    # one job
 pawsey/go.sh full --array=0-7%1      # or 8 shorter jobs, one after another
 ```
 
+The results go in `$MYSCRATCH/cb-compare/results-sha-<commit>`, one
+directory per image, so a run at a new commit never reuses an older image's
+timings. `full` needs the image for the checked-out commit and won't fall
+back to `latest`; if CI hasn't built it yet, wait a few minutes. Set
+`RESULTS=` to choose the directory yourself.
+
 Extra arguments are passed to `sbatch`. If a job dies or times out, run the
-same command again: finished configurations are skipped and the saved plan
-is reused. An array run doesn't write `summary.md`. Summarise it when it is
+same command again from the same commit: finished configurations are
+skipped and the saved plan is reused. An array run doesn't write `summary.md`. Summarise it when it is
 brought back (step 5).
 
 ## 5. Bring the results back
@@ -58,8 +64,11 @@ brought back (step 5).
 pawsey/go.sh pack        # prints the path of a .tar.gz with results*/ and slurm-*.log
 ```
 
-Copy the tarball to wherever you have the repo checked out. Unpack it in the
-repo root, which replaces `results/` and adds `results-quick/`, then run `python3 scripts/summarise.py results` and commit.
+Copy the tarball to wherever you have the repo checked out and unpack it
+somewhere outside the repo. It holds every `results*` directory on scratch,
+older runs included. Copy the one for this commit, `results-sha-<commit>`,
+over the repo's `results/`, then run `python3 scripts/summarise.py results`
+and commit.
 Alternatively, commit the results from a branch on Setonix and push, then
 `git pull` them elsewhere.
 
