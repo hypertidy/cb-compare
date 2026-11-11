@@ -10,8 +10,12 @@
 #   pawsey/go.sh pack     # tar the results to bring back
 #
 # Big files (image, cache, results) go under $MYSCRATCH, not $HOME.
+# Results go in a directory per image tag, $WORK/results-<tag> (quick:
+# results-quick-<tag>). A resubmit with the same tag resumes it; a new
+# commit starts afresh instead of skipping configurations an older image timed.
 # Env: ACCOUNT (default $PAWSEY_PROJECT), WORK (default $MYSCRATCH/cb-compare),
-#      TAG (default sha-<this commit>, falling back to latest).
+#      TAG (default sha-<this commit>; check and quick fall back to latest,
+#      full doesn't), RESULTS (override the results directory).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 REPO=$PWD
@@ -31,10 +35,14 @@ fi
 
 TAG=${TAG:-sha-$(git rev-parse --short=7 HEAD)}
 SIF=$WORK/cb-compare-$TAG.sif
-pull() {
+pull() {  # pull [exact]: with exact, no fallback to latest
   [ -s "$SIF" ] && return
   echo "pulling ghcr.io/hypertidy/cb-compare:$TAG -> $SIF" >&2
   if ! singularity pull "$SIF" "docker://ghcr.io/hypertidy/cb-compare:$TAG"; then
+    if [ "${1:-}" = exact ]; then
+      echo "no image for $TAG yet (CI builds one per push to main, ~3 min); try again shortly" >&2
+      exit 1
+    fi
     echo "no image for $TAG (CI builds one per push to main, ~3 min); using latest" >&2
     TAG=latest; SIF=$WORK/cb-compare-latest.sif
     [ -s "$SIF" ] || singularity pull "$SIF" docker://ghcr.io/hypertidy/cb-compare:latest
@@ -60,10 +68,10 @@ case ${1:-} in
     echo "image OK: $SIF" >&2 ;;
   quick)
     need_account; pull
-    PLAN_ARGS=--quick submit "$WORK/results-quick" --time=00:30:00 ;;
+    PLAN_ARGS=--quick submit "${RESULTS:-$WORK/results-quick-$TAG}" --time=00:30:00 ;;
   full)
-    need_account; pull
-    submit "$WORK/results" "${@:2}" ;;
+    need_account; pull exact
+    submit "${RESULTS:-$WORK/results-$TAG}" "${@:2}" ;;
   status)
     for d in "$WORK"/results*; do
       [ -d "$d" ] || continue
@@ -76,5 +84,5 @@ case ${1:-} in
     out=$WORK/cb-compare-results-$(date +%Y%m%d-%H%M).tar.gz
     tar -C "$WORK" -czf "$out" $(cd "$WORK" && ls -d results* slurm-*.log 2>/dev/null)
     echo "$out" ;;
-  *) sed -n '2,15p' "$0"; exit 1 ;;
+  *) sed -n '2,18p' "$0"; exit 1 ;;
 esac
