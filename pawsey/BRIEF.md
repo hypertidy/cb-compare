@@ -23,6 +23,8 @@ network are needed on the compute node.
 
 - controlledburn-rs PR #25 (`slice_tiles`) is merged. The harness pins the
   crate at its head, `56ba259`, and burnscars at `1d24ef7`.
+  (2026-11-11: the harness now pins `e1696fc`, #30, and `cb_slice` uses
+  `slice_tiles_par`. The full Setonix run in `results/` used `56ba259`.)
 - The image at `sha-2986fe0` or later is tested with `docker run --read-only`
   as a non-root user. `pawsey/setonix.slurm` and the Singularity step have
   **not** run on Setonix yet.

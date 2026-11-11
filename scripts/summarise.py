@@ -147,7 +147,7 @@ fig.tight_layout(); fig.savefig(os.path.join(FIG, "scaling.png")); plt.close(fig
 
 # ---- C/D: tiles
 md.append("## C. Tiles: burn once and slice, against re-burn per fixed tile\n")
-md.append("`cb_slice` / `bs_slice`: whole-grid burn (feature-parallel when threads > 1), then a one-pass slice; burn and slice times shown. "
+md.append("`cb_slice` / `bs_slice`: whole-grid burn (feature-parallel when threads > 1), then a one-pass slice; burn and slice times shown. cb slices on the same threads (`slice_tiles_par`), bs's slice is serial. "
           "`bs_reburn`: each tile burns the geometries whose bbox meets it onto `grid.window(tile)`, parallel over tiles. "
           "pairs = geometry–tile pairs burned.\n")
 md.append("| input | mode | tile | threads | tiles (non-empty) | cb_slice total (burn + slice) | bs_slice total (burn + slice) | bs_reburn total (pairs) | RSS cb / bs / reburn |")

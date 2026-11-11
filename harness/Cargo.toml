@@ -7,7 +7,7 @@ publish = false
 # Both engines are pinned by commit. scripts/versions.sh prints them, and
 # run_all.sh records them with every result.
 [dependencies]
-controlledburn = { git = "https://github.com/hypertidy/controlledburn-rs", rev = "56ba2596e1d0634d190834cc0958af4bcbed4d09" }
+controlledburn = { git = "https://github.com/hypertidy/controlledburn-rs", rev = "e1696fc543e6dbbe05b586544b50cde28072aff2" }
 burnscars = { git = "https://github.com/earth-mover/burnscars", rev = "1d24ef7f14a4dd21396f3d627cdc32796c278d05" }
 wkb = "=0.9.3"
 geo-traits = "0.3"
