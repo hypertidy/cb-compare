@@ -23,7 +23,7 @@ RESULTS=${RESULTS:-$PWD/results}
 mkdir -p "$RESULTS"
 # Setonix provides Singularity as a module; the exact name may change:
 # `module avail singularity`.
-command -v singularity >/dev/null || module load singularity/4.1.0-slurm || module load singularity
+command -v singularity >/dev/null || module load singularity/4.3.5-slurm || module load singularity/4.1.0-slurm || module load singularity
 
 # Variables for inside the container (SINGULARITYENV_/APPTAINERENV_ win over
 # the image's own environment).
