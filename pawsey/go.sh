@@ -29,7 +29,7 @@ export APPTAINER_TMPDIR=$SINGULARITY_TMPDIR
 mkdir -p "$SINGULARITY_CACHEDIR" "$SINGULARITY_TMPDIR"
 
 if ! command -v singularity >/dev/null; then
-  module load singularity/4.1.0-slurm 2>/dev/null || module load singularity 2>/dev/null || {
+  module load singularity/4.3.5-slurm 2>/dev/null || module load singularity/4.1.0-slurm 2>/dev/null || module load singularity 2>/dev/null || {
     echo "no singularity: try 'module avail singularity' and load it first" >&2; exit 1; }
 fi
 

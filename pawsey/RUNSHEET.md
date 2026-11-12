@@ -5,7 +5,7 @@ Everything that runs is in the read-only image
 and the prepared inputs. The git checkout only supplies `pawsey/go.sh` and
 the Slurm script. You don't need rustup, a build, or network on the compute
 node. On the login node you only need Singularity; if it isn't on PATH,
-`go.sh` loads `singularity/4.1.0-slurm` itself.
+`go.sh` loads `singularity/4.3.5-slurm` itself (falling back to `4.1.0-slurm`, then the default).
 
 The image, the Singularity cache and the results all go under
 `$MYSCRATCH/cb-compare` (set `WORK=` to put them elsewhere), never in `$HOME`.
