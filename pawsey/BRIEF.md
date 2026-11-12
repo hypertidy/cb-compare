@@ -26,6 +26,11 @@ network are needed on the compute node.
   (2026-11-12: the harness pins `e1696fc`, #30, and `cb_slice` uses
   `slice_tiles_par`. `results/` holds the Setonix run of that version, job
   52790194; the earlier run of `56ba259` was job 52637376.)
+  (Later on 2026-11-12: the harness pins the released crate, `=0.3.0` from
+  crates.io. `cb_par` is now the crate's `burn_par` with the WKB parsed in
+  parallel, the old approach stays as `cb_par_groups` at the most threads,
+  and every timing records page faults; `env.json` records THP, glibc and
+  malloc settings. Not yet run on Setonix.)
 - The image at `sha-2986fe0` or later is tested with `docker run --read-only`
   as a non-root user. `pawsey/setonix.slurm` and the Singularity step have
   **not** run on Setonix yet.

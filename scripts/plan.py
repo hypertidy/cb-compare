@@ -6,7 +6,8 @@ usage: plan.py [--quick] [--threads 1,2,4,8,16,32] [--repeats 5] > plan.tsv
 
 The plan is the experiment design, kept in one place:
   A. single thread, whole grid: cb_burn, bs_burn, every input and mode
-  B. thread scaling, whole grid (feature-parallel): cb_par, bs_par
+  B. thread scaling, whole grid (feature-parallel): cb_par (burn_par), bs_par;
+     and at the most threads, cb_par_groups (the harness's earlier approach)
   C. tiles: burn-then-slice (cb_slice, bs_slice) against the fixed-tile
      re-burn (bs_reburn), at several tile sizes, at 1 thread and at max
   D. thread scaling of the tiled strategies at one tile size
@@ -43,6 +44,8 @@ for i in inputs:
             if t > 1:
                 for s in ["cb_par", "bs_par"]:
                     add(i, m, s, t, 0, R)                         # B
+        if tmax > 1:
+            add(i, m, "cb_par_groups", tmax, 0, R)                # B
         for tile in ts:
             for t in sorted({1, tmax}):
                 for s in ["cb_slice", "bs_slice", "bs_reburn"]:

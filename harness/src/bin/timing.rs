@@ -7,9 +7,14 @@
 //!
 //! Strategies (threads = rayon pool size; tile = tile edge in cells, 0 = no tiles):
 //!   cb_burn, bs_burn        serial whole-grid burn (threads ignored)
-//!   cb_par, bs_par          feature-parallel whole-grid burn, concatenated
+//!   cb_par                  controlledburn::burn_par on `threads` threads, the
+//!                           WKB parsed in parallel first (parse_s reported)
+//!   cb_par_groups           the harness's own feature-parallel burn before
+//!                           burn_par: groups burned in the rayon pool, concatenated
+//!   bs_par                  feature-parallel whole-grid burn, concatenated
 //!   cb_slice, bs_slice      whole-grid burn (feature-parallel when threads > 1),
-//!                           then a one-pass slice into tiles; burn and slice
+//!                           then a one-pass slice into tiles (cb burns with
+//!                           cb_par, bs with bs_par); burn and slice
 //!                           are timed separately. cb slices on `threads`
 //!                           threads (slice_tiles_par; serial at 1 thread),
 //!                           bs's slice is serial
@@ -18,6 +23,11 @@
 //!                           over tiles (bucketing timed separately)
 //!   cb_crop_loop            whole-grid burn, then crop() once per tile (the
 //!                           pattern slice_tiles replaces; for scale only)
+//!
+//! Every line also carries the process's minor and major page faults over the
+//! repeat (`minflt`, `majflt`), and for burn-then-slice strategies over each
+//! phase (`burn_minflt`, `slice_minflt`): first-touch faults on fresh output
+//! are a large share of a slice, and depend on the kernel's huge-page policy.
 use cbcmp::*;
 use std::time::Instant;
 
@@ -40,6 +50,7 @@ fn main() {
     let ntiles = if tile > 0 { (g.ncol.div_ceil(tile) as u64) * (g.nrow.div_ceil(tile) as u64) } else { 0 };
 
     let run = || -> serde_json::Value {
+        let f0 = faults().0;
         let t0 = Instant::now();
         let secs = |t: Instant| t.elapsed().as_secs_f64();
         pool.install(|| match strat {
@@ -52,7 +63,11 @@ fn main() {
                 serde_json::json!({"burn_s": secs(t0), "records": bs_records(&r), "failed": f.len()})
             }
             "cb_par" => {
-                let r = cb_par(&wkbs, &gc, mode, ngroups);
+                let (r, parse_s, pf) = cb_par(&wkbs, &gc, mode, threads);
+                serde_json::json!({"burn_s": secs(t0), "parse_s": parse_s, "records": cb_records(&r), "parse_failed": pf})
+            }
+            "cb_par_groups" => {
+                let r = cb_par_groups(&wkbs, &gc, mode, ngroups);
                 serde_json::json!({"burn_s": secs(t0), "records": cb_records(&r)})
             }
             "bs_par" => {
@@ -60,21 +75,25 @@ fn main() {
                 serde_json::json!({"burn_s": secs(t0), "records": bs_records(&r), "failed": f})
             }
             "cb_slice" => {
-                let r = if threads > 1 { cb_par(&wkbs, &gc, mode, ngroups) } else { cb_burn(&wkbs, &gc, mode) };
+                let r = if threads > 1 { cb_par(&wkbs, &gc, mode, threads).0 } else { cb_burn(&wkbs, &gc, mode) };
                 let burn_s = secs(t0);
+                let f1 = faults().0;
                 let t1 = Instant::now();
                 let tiles = controlledburn::slice_tiles_par(&r, &gc, tile, tile, threads);
                 let n: usize = tiles.iter().map(|t| cb_records(&t.result)).sum();
-                serde_json::json!({"burn_s": burn_s, "slice_s": secs(t1), "records": n, "tiles_nonempty": tiles.len()})
+                serde_json::json!({"burn_s": burn_s, "slice_s": secs(t1), "records": n, "tiles_nonempty": tiles.len(),
+                                   "burn_minflt": f1 - f0, "slice_minflt": faults().0 - f1})
             }
             "bs_slice" => {
                 let r = if threads > 1 { bs_par(&wkbs, &gb, mode, ngroups).0 } else { bs_burn(&wkbs, 0, &gb, mode).0 };
                 let burn_s = secs(t0);
+                let f1 = faults().0;
                 let t1 = Instant::now();
                 let tiles = bs_slice(&r, &g, tile, tile);
                 let n: usize = tiles.iter().map(cb_records).sum();
                 let ne = tiles.iter().filter(|t| cb_records(t) > 0).count();
-                serde_json::json!({"burn_s": burn_s, "slice_s": secs(t1), "records": n, "tiles_nonempty": ne})
+                serde_json::json!({"burn_s": burn_s, "slice_s": secs(t1), "records": n, "tiles_nonempty": ne,
+                                   "burn_minflt": f1 - f0, "slice_minflt": faults().0 - f1})
             }
             "bs_reburn" => {
                 let b = bucket(&wkbs, &g, tile, tile);
@@ -109,9 +128,13 @@ fn main() {
 
     let _ = run(); // warm-up, untimed
     for rep in 0..repeats {
+        let (m0, j0) = faults();
         let t = Instant::now();
         let mut v = run();
         v["total_s"] = serde_json::json!(t.elapsed().as_secs_f64());
+        let (m1, j1) = faults();
+        v["minflt"] = serde_json::json!(m1 - m0);
+        v["majflt"] = serde_json::json!(j1 - j0);
         v["input"] = serde_json::json!(name);
         v["mode"] = serde_json::json!(a[3]);
         v["strategy"] = serde_json::json!(strat);
