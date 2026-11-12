@@ -1,10 +1,90 @@
 # Sparse rasterization in Rust: controlledburn-rs and burnscars, compared
 
-*The numbers come from `results/summary.md`, a full run on one exclusive
+*`results/` holds the latest run: controlledburn-rs 0.3.0 on one exclusive
 Pawsey Setonix node (2 × AMD EPYC 7763, 128 cores, 256 logical CPUs,
-250 GB; Slurm job 52790194, 2026-11-11). `results/env.json` records the
-machine and versions. An earlier run on the same node type (job 52637376,
-controlledburn-rs `56ba259`) is compared where the numbers moved.*
+250 GB; Slurm job 52923373, 2026-11-12), with `results/env.json` recording
+the machine and versions. The TL;DR and §§2–5 still quote the run before it
+(job 52790194, 2026-11-11, controlledburn-rs `e1696fc`; its summary is
+[`results/summary.md` at 0263102](https://github.com/hypertidy/cb-compare/blob/0263102/results/summary.md)),
+because in the latest run the parallel burn-once timings measure mostly
+harness overhead (§0). An earlier run (job 52637376, `56ba259`) is compared
+where the numbers moved.*
+
+## 0. Latest run: controlledburn-rs 0.3.0 (job 52923373)
+
+What changed since job 52790194: the crate is the 0.3.0 release (multi-part
+records merged, huge rings stored compactly, `burn_par`, a thread cap on the
+parallel slice); the harness's `cb_par` is now the crate's `burn_par` after
+parsing the WKB in parallel, with the old groups-and-concatenate burn kept as
+`cb_par_groups` at 128 threads; and every timing records page faults, with
+the node's huge-page and allocator settings in `env.json`. burnscars and the
+toolchain are unchanged.
+
+- **Correctness is unchanged.** All 20 input/mode pairs verify as before:
+  every cell equal except the same two single-cell differences on rock-32m
+  (§4), and parallel output equals serial output for both crates. Record
+  counts are identical.
+- **Serial coverage is faster, and uses less memory on one huge ring.**
+  coast-1e5 0.373 → 0.323 s (−13%), rock-32m 1.00 → 0.957 s, coast-1e6
+  12.6 → 12.4 s with peak RSS 9.0 → 6.9 GB (a ring's traversals now take
+  16 bytes each, controlledburn-rs #37).
+- **Serial approx is 4–13% slower** (coast-1e5 0.0349 → 0.0383 s, small-1e5
+  0.305 → 0.346 s, rock-32m 0.182 → 0.196 s), while burnscars moved by
+  4% or less. On the dev VM rock-32m approx is 3–8% slower in repeated
+  alternating runs. Bisected over the merges, it arrives with
+  controlledburn-rs #38, which adds `burn_par` but changes no code on the
+  serial path, so it is code generation (inlining and layout), not work.
+- **Huge pages explain the slice timings, now measured.** This node had
+  transparent huge pages `always`. The serial slice of small-1e5 (approx,
+  256-cell tiles) took 1,149 minor faults and 41.8 ms; on the dev VM with
+  4 KB pages it takes 14,900 faults and 82 ms, and the two earlier Setonix
+  runs took 31 and 67 ms. That is the first-touch cost described in
+  controlledburn-rs `design/slice-after-burn.md`, which those runs could
+  only infer.
+- **The slice thread cap works.** The parallel slice of a small output no
+  longer starts 128 threads: rock-1024m approx, 512-cell tiles, 128
+  threads, 16.3 ms → 1.2 ms (controlledburn-rs #31).
+- **`cb_par` (`burn_par`) was 2–11× slower than `cb_par_groups` at 128
+  threads** on the rock outcrops and small-1e5, and level on the coastlines:
+
+  | input | mode | cb_par | cb_par_groups |
+  |---|---|---|---|
+  | rock-1024m | coverage | 0.0285 s | 0.0042 s |
+  | rock-1024m | approx | 0.0288 s | 0.0027 s |
+  | rock-32m | coverage | 0.0669 s | 0.0647 s |
+  | rock-32m | approx | 0.0344 s | 0.0162 s |
+  | small-1e5 | coverage | 0.137 s | 0.104 s |
+  | small-1e5 | approx | 0.0965 s | 0.0252 s |
+  | coast-1e6 | coverage | 12.6 s | 12.6 s |
+
+  The cost is nearly constant across the rock grids (about 25–35 ms from
+  1024 m to 32 m, the same 25,954 polygons), so it is per geometry, not per
+  cell. Split apart on the dev VM at 32 threads:
+
+  | input | mode | parse | `burn_par` | free the parsed geometries | groups |
+  |---|---|---|---|---|---|
+  | rock-1024m | approx | 1.9 ms | 7.4 ms | 7.3 ms | 3.1 ms |
+  | rock-32m | approx | 2.0 ms | 19.7 ms | 10.4 ms | 37.3 ms |
+  | rock-32m | coverage | 1.6 ms | 130 ms | 15.0 ms | 176 ms |
+  | small-1e5 | approx | 5.7 ms | 27.0 ms | 27.7 ms | 63.5 ms |
+  | small-1e5 | coverage | 3.5 ms | 227 ms | 22.0 ms | 257 ms |
+
+  `burn_par` itself beats the groups except on the smallest burns, where
+  starting threads still costs a few milliseconds. What `cb_par` mostly
+  measured is building and freeing an owned geometry for each of tens of
+  thousands of polygons; the groups never do, because `burn_wkb` parses
+  each geometry as it burns it. Any caller who starts from WKB pays that
+  cost with `burn_par`, so the fix belongs in the crate: a parallel burn
+  that parses WKB inside each worker's chunk. Until then the parallel
+  burn-once numbers in this run (B, and C/D above 1 thread) overstate the
+  burn by that overhead: small-1e5 approx's burn before slicing went from
+  0.025 s to 0.114 s at 128 threads, and its peak RSS from 186 to 379 MB.
+  Where the burn is large the gain shows anyway: rock-32m coverage burn +
+  slice at 128 threads (2048-cell tiles) went from 0.13 to 0.11 s, and its
+  peak RSS from 1.29 to 0.94 GB.
+
+**Next:** a WKB-parsing `burn_par` in controlledburn-rs, `cb_par` on it,
+and a rerun, after which the TL;DR moves to the new numbers.
 
 ## TL;DR
 
