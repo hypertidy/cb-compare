@@ -58,7 +58,7 @@ fn main() {
 
     // feature-parallel equals serial, record for record after a stable sort
     let pool = rayon::ThreadPoolBuilder::new().num_threads(8).build().unwrap();
-    let (pc, (pb, _)) = pool.install(|| (cb_par(&wkbs, &g.cb(), mode, 32), bs_par(&wkbs, &g.bs(), mode, 32)));
+    let (pc, (pb, _)) = pool.install(|| (cb_par(&wkbs, &g.cb(), mode, 8).0, bs_par(&wkbs, &g.bs(), mode, 32)));
     out["par_equals_serial_cb"] = serde_json::json!(pc.runs == rc.runs && pc.edges == rc.edges && pc.lines == rc.lines && pc.points == rc.points);
     let pb = bs_to_cb(&pb);
     out["par_equals_serial_bs"] = serde_json::json!(pb.runs == rb.runs && pb.edges == rb.edges && pb.lines == rb.lines && pb.points == rb.points);

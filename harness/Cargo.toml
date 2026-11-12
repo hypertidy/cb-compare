@@ -4,10 +4,10 @@ version = "0.1.0"
 edition = "2021"
 publish = false
 
-# Both engines are pinned by commit. scripts/versions.sh prints them, and
-# run_all.sh records them with every result.
+# Both engines are pinned: controlledburn-rs by release, burnscars by
+# commit. scripts/env.sh records them with every result.
 [dependencies]
-controlledburn = { git = "https://github.com/hypertidy/controlledburn-rs", rev = "e1696fc543e6dbbe05b586544b50cde28072aff2" }
+controlledburn = "=0.3.0"
 burnscars = { git = "https://github.com/earth-mover/burnscars", rev = "1d24ef7f14a4dd21396f3d627cdc32796c278d05" }
 wkb = "=0.9.3"
 geo-traits = "0.3"

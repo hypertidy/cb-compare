@@ -19,9 +19,9 @@ env = json.load(open(os.path.join(R, "env.json")))
 COL = {"cb": "#2a78d6", "bs": "#eb6834", "reburn": "#1baf7a"}
 INK, INK2, GRID = "#0b0b0b", "#52514e", "#e4e3df"
 LABEL = {"cb_burn": "controlledburn-rs", "bs_burn": "burnscars",
-         "cb_par": "controlledburn-rs", "bs_par": "burnscars",
+         "cb_par": "controlledburn-rs", "bs_par": "burnscars", "cb_par_groups": "cb: groups, concatenated",
          "cb_slice": "cb: burn + slice", "bs_slice": "bs: burn + slice", "bs_reburn": "bs: re-burn per tile"}
-SCOL = {"cb_burn": COL["cb"], "cb_par": COL["cb"], "cb_slice": COL["cb"],
+SCOL = {"cb_burn": COL["cb"], "cb_par": COL["cb"], "cb_slice": COL["cb"], "cb_par_groups": COL["cb"],
         "bs_burn": COL["bs"], "bs_par": COL["bs"], "bs_slice": COL["bs"], "bs_reburn": COL["reburn"]}
 plt.rcParams.update({"font.size": 9, "axes.edgecolor": INK2, "axes.labelcolor": INK2, "xtick.color": INK2,
                      "ytick.color": INK2, "axes.spines.top": False, "axes.spines.right": False,
@@ -59,6 +59,9 @@ md = [f"# Results\n",
       f"Label: {env['hostname_class']}{' Slurm job ' + env['slurm_job'] if env['slurm_job'] else ''}.  ",
       f"controlledburn-rs `{env['controlledburn_rs'][:10]}`, burnscars `{env['burnscars'][:10]}`, {env['rustc']}.\n",
       "Times are seconds, median [min–max] over the repeats after one warm-up. RSS is the peak resident set of the whole process (input included), MB.\n"]
+if "thp_enabled" in env:
+    md.append(f"Memory: transparent huge pages `{env['thp_enabled']}` (defrag `{env['thp_defrag']}`), {env['glibc']}, "
+              f"GLIBC_TUNABLES `{env.get('glibc_tunables') or 'unset'}`, MALLOC_ARENA_MAX `{env.get('malloc_arena_max') or 'unset'}`.\n")
 
 # ---- correctness
 md.append("## Correctness (before timing)\n")
@@ -127,6 +130,18 @@ for i in inputs:
             if not a or not b: continue
             md.append(f"| {i} | {m} | {t} | {fmt(a)} | {sc[0]/a[0]:.1f}× | {fmt(b)} | {sb[0]/b[0]:.1f}× | "
                       f"{rss.get(cfg(i,m,'cb_par',t,0),0):.0f} / {rss.get(cfg(i,m,'bs_par',t,0),0):.0f} |")
+gp = [(i, m) for i in inputs for m in ["coverage", "approx"] if cfg(i, m, "cb_par_groups", max(threads), 0) in runs]
+if gp:
+    tm = max(threads)
+    md.append(f"\n`burn_par` against the harness's earlier feature-parallel burn (groups burned in a rayon pool, concatenated), at {tm} threads. "
+              "`cb_par` includes parsing the WKB in parallel (parse shown).\n")
+    md.append("| input | mode | cb_par (parse) | cb_par_groups | ratio |")
+    md.append("|---|---|---|---|---|")
+    for i, m in gp:
+        a, b = stat(runs.get(cfg(i, m, "cb_par", tm, 0), [])), stat(runs[cfg(i, m, "cb_par_groups", tm, 0)])
+        p = stat(runs.get(cfg(i, m, "cb_par", tm, 0), []), "parse_s")
+        if a and b:
+            md.append(f"| {i} | {m} | {fmt(a)} ({p[0]:.3g}) | {fmt(b)} | {a[0]/b[0]:.2f} |")
 md.append("\n![scaling](figures/scaling.png)\n")
 n = len(inputs); nc = min(4, n); nr = -(-n // nc)
 fig, axs = plt.subplots(nr, nc, figsize=(2.3 * nc, 2.1 * nr + 0.6), squeeze=False, sharex=True)
@@ -168,6 +183,17 @@ for i in inputs:
                           f"{fmt(stat(b))} ({med(b,'burn_s'):.3g} + {med(b,'slice_s'):.3g}) | "
                           f"{fmt(stat(rb))} ({rb[0]['geom_tile_pairs']:,}) | "
                           f"{rss.get(cfg(i,m,'cb_slice',t,tile),0):.0f} / {rss.get(cfg(i,m,'bs_slice',t,tile),0):.0f} / {rss.get(cfg(i,m,'bs_reburn',t,tile),0):.0f} |")
+fl = [(k, r) for k, r in runs.items() if r[0]["strategy"] in ("cb_slice", "bs_slice") and "slice_minflt" in r[0]]
+if fl:
+    md.append("\nMinor page faults per phase (median over repeats): a slice writes every record into fresh tables, "
+              "so its first-touch faults are a large share of its time, and they fall to near zero with huge pages.\n")
+    md.append("| input | mode | tile | threads | strategy | burn faults | slice faults | slice s |")
+    md.append("|---|---|---|---|---|---|---|---|")
+    for k, r in sorted(fl, key=lambda kr: (inputs.index(kr[1][0]["input"]) if kr[1][0]["input"] in inputs else 99, kr[0])):
+        x = r[0]
+        md.append(f"| {x['input']} | {x['mode']} | {x['tile']} | {x['threads']} | {x['strategy']} | "
+                  f"{statistics.median(y['burn_minflt'] for y in r):,.0f} | {statistics.median(y['slice_minflt'] for y in r):,.0f} | "
+                  f"{statistics.median(y['slice_s'] for y in r):.3g} |")
 md.append("\n![tiles](figures/tiles.png)\n")
 tmax = max(threads)
 tin = [i for i in inputs if tiles_of[i]]
