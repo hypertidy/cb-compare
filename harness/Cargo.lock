@@ -46,9 +46,9 @@ dependencies = [
 
 [[package]]
 name = "controlledburn"
-version = "0.3.0"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d5ac3f752b9587d5e0d0cc057c1464ad25e8e34bd7d6f340a667e5471097043e"
+checksum = "50ecc9a9733d3c0acca87d302cf74e6bba48d5839c82a37942bb1262b5af6530"
 
 [[package]]
 name = "crossbeam-deque"

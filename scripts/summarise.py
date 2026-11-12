@@ -133,15 +133,14 @@ for i in inputs:
 gp = [(i, m) for i in inputs for m in ["coverage", "approx"] if cfg(i, m, "cb_par_groups", max(threads), 0) in runs]
 if gp:
     tm = max(threads)
-    md.append(f"\n`burn_par` against the harness's earlier feature-parallel burn (groups burned in a rayon pool, concatenated), at {tm} threads. "
-              "`cb_par` includes parsing the WKB in parallel (parse shown).\n")
-    md.append("| input | mode | cb_par (parse) | cb_par_groups | ratio |")
+    md.append(f"\n`burn_wkb_par` (`cb_par`) against the harness's earlier feature-parallel burn (groups burned in a rayon pool, concatenated), at {tm} threads. "
+              "Both parse the WKB as they burn.\n")
+    md.append("| input | mode | cb_par | cb_par_groups | ratio |")
     md.append("|---|---|---|---|---|")
     for i, m in gp:
         a, b = stat(runs.get(cfg(i, m, "cb_par", tm, 0), [])), stat(runs[cfg(i, m, "cb_par_groups", tm, 0)])
-        p = stat(runs.get(cfg(i, m, "cb_par", tm, 0), []), "parse_s")
         if a and b:
-            md.append(f"| {i} | {m} | {fmt(a)} ({p[0]:.3g}) | {fmt(b)} | {a[0]/b[0]:.2f} |")
+            md.append(f"| {i} | {m} | {fmt(a)} | {fmt(b)} | {a[0]/b[0]:.2f} |")
 md.append("\n![scaling](figures/scaling.png)\n")
 n = len(inputs); nc = min(4, n); nr = -(-n // nc)
 fig, axs = plt.subplots(nr, nc, figsize=(2.3 * nc, 2.1 * nr + 0.6), squeeze=False, sharex=True)

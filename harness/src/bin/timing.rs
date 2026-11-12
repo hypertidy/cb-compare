@@ -7,8 +7,8 @@
 //!
 //! Strategies (threads = rayon pool size; tile = tile edge in cells, 0 = no tiles):
 //!   cb_burn, bs_burn        serial whole-grid burn (threads ignored)
-//!   cb_par                  controlledburn::burn_par on `threads` threads, the
-//!                           WKB parsed in parallel first (parse_s reported)
+//!   cb_par                  controlledburn::burn_wkb_par on `threads` threads
+//!                           (each blob parsed by the thread that burns it)
 //!   cb_par_groups           the harness's own feature-parallel burn before
 //!                           burn_par: groups burned in the rayon pool, concatenated
 //!   bs_par                  feature-parallel whole-grid burn, concatenated
@@ -63,8 +63,8 @@ fn main() {
                 serde_json::json!({"burn_s": secs(t0), "records": bs_records(&r), "failed": f.len()})
             }
             "cb_par" => {
-                let (r, parse_s, pf) = cb_par(&wkbs, &gc, mode, threads);
-                serde_json::json!({"burn_s": secs(t0), "parse_s": parse_s, "records": cb_records(&r), "parse_failed": pf})
+                let r = cb_par(&wkbs, &gc, mode, threads);
+                serde_json::json!({"burn_s": secs(t0), "records": cb_records(&r)})
             }
             "cb_par_groups" => {
                 let r = cb_par_groups(&wkbs, &gc, mode, ngroups);
@@ -75,7 +75,7 @@ fn main() {
                 serde_json::json!({"burn_s": secs(t0), "records": bs_records(&r), "failed": f})
             }
             "cb_slice" => {
-                let r = if threads > 1 { cb_par(&wkbs, &gc, mode, threads).0 } else { cb_burn(&wkbs, &gc, mode) };
+                let r = if threads > 1 { cb_par(&wkbs, &gc, mode, threads) } else { cb_burn(&wkbs, &gc, mode) };
                 let burn_s = secs(t0);
                 let f1 = faults().0;
                 let t1 = Instant::now();

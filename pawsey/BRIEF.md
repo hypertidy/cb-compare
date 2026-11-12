@@ -30,7 +30,11 @@ network are needed on the compute node.
   crates.io. `cb_par` is now the crate's `burn_par` with the WKB parsed in
   parallel, the old approach stays as `cb_par_groups` at the most threads,
   and every timing records page faults; `env.json` records THP, glibc and
-  malloc settings. Not yet run on Setonix.)
+  malloc settings. Run on Setonix as job 52923373, results in #7.)
+  (Later again: the harness pins `=0.3.2`, and `cb_par` is
+  `burn_wkb_par`, which parses each blob on the thread that burns it;
+  the 0.3.0 run's `cb_par` mostly measured building and freeing parsed
+  geometries. Not yet run on Setonix.)
 - The image at `sha-2986fe0` or later is tested with `docker run --read-only`
   as a non-root user. `pawsey/setonix.slurm` and the Singularity step have
   **not** run on Setonix yet.
