@@ -7,7 +7,7 @@ publish = false
 # Both engines are pinned: controlledburn-rs by release, burnscars by
 # commit. scripts/env.sh records them with every result.
 [dependencies]
-controlledburn = "=0.3.0"
+controlledburn = "=0.3.2"
 burnscars = { git = "https://github.com/earth-mover/burnscars", rev = "1d24ef7f14a4dd21396f3d627cdc32796c278d05" }
 wkb = "=0.9.3"
 geo-traits = "0.3"

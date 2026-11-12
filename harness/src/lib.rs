@@ -260,19 +260,11 @@ pub fn groups(wkbs: &[Vec<u8>], n: usize) -> Vec<Range<usize>> {
     out
 }
 
-/// controlledburn-rs on `threads` threads: parse the WKB in parallel (in
-/// the current rayon pool), then `burn_par`, which balances the geometries
-/// over its own threads and returns the same records as `burn`. An
-/// unparseable geometry becomes an empty one, keeping every id in place.
-/// Returns the result, the parse time in seconds and the parse failures.
-pub fn cb_par(wkbs: &[Vec<u8>], grid: &cb::GridSpec, mode: Mode, threads: usize) -> (cb::BurnResult, f64, usize) {
-    let t = std::time::Instant::now();
-    let parsed: Vec<Option<cb::Geometry>> = wkbs.par_iter().map(|w| cb::parse_wkb(w).ok()).collect();
-    let failed = parsed.iter().filter(|g| g.is_none()).count();
-    let geoms: Vec<cb::Geometry> =
-        parsed.into_iter().map(|g| g.unwrap_or(cb::Geometry::MultiPolygon(Vec::new()))).collect();
-    let parse_s = t.elapsed().as_secs_f64();
-    (cb::burn_par(&geoms, grid, mode.cb(), threads).unwrap(), parse_s, failed)
+/// controlledburn-rs on `threads` threads: `burn_wkb_par`, which parses
+/// each blob on the thread that burns it (parse inside the timing, as for
+/// every strategy).
+pub fn cb_par(wkbs: &[Vec<u8>], grid: &cb::GridSpec, mode: Mode, threads: usize) -> cb::BurnResult {
+    cb::burn_wkb_par(wkbs, grid, mode.cb(), threads).unwrap()
 }
 
 /// The harness's own feature-parallel controlledburn-rs, as used before
