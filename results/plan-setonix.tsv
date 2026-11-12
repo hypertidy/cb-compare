@@ -14,6 +14,7 @@ rects	coverage	cb_par	64	0	5
 rects	coverage	bs_par	64	0	5
 rects	coverage	cb_par	128	0	5
 rects	coverage	bs_par	128	0	5
+rects	coverage	cb_par_groups	128	0	5
 rects	coverage	cb_slice	1	64	5
 rects	coverage	bs_slice	1	64	5
 rects	coverage	bs_reburn	1	64	5
@@ -60,6 +61,7 @@ rects	approx	cb_par	64	0	5
 rects	approx	bs_par	64	0	5
 rects	approx	cb_par	128	0	5
 rects	approx	bs_par	128	0	5
+rects	approx	cb_par_groups	128	0	5
 rects	approx	cb_slice	1	64	5
 rects	approx	bs_slice	1	64	5
 rects	approx	bs_reburn	1	64	5
@@ -106,6 +108,7 @@ coast-1e5	coverage	cb_par	64	0	5
 coast-1e5	coverage	bs_par	64	0	5
 coast-1e5	coverage	cb_par	128	0	5
 coast-1e5	coverage	bs_par	128	0	5
+coast-1e5	coverage	cb_par_groups	128	0	5
 coast-1e5	coverage	cb_slice	1	256	5
 coast-1e5	coverage	bs_slice	1	256	5
 coast-1e5	coverage	bs_reburn	1	256	5
@@ -152,6 +155,7 @@ coast-1e5	approx	cb_par	64	0	5
 coast-1e5	approx	bs_par	64	0	5
 coast-1e5	approx	cb_par	128	0	5
 coast-1e5	approx	bs_par	128	0	5
+coast-1e5	approx	cb_par_groups	128	0	5
 coast-1e5	approx	cb_slice	1	256	5
 coast-1e5	approx	bs_slice	1	256	5
 coast-1e5	approx	bs_reburn	1	256	5
@@ -198,6 +202,7 @@ coast-1e6	coverage	cb_par	64	0	5
 coast-1e6	coverage	bs_par	64	0	5
 coast-1e6	coverage	cb_par	128	0	5
 coast-1e6	coverage	bs_par	128	0	5
+coast-1e6	coverage	cb_par_groups	128	0	5
 coast-1e6	coverage	cb_slice	1	256	5
 coast-1e6	coverage	bs_slice	1	256	5
 coast-1e6	coverage	bs_reburn	1	256	5
@@ -250,6 +255,7 @@ coast-1e6	approx	cb_par	64	0	5
 coast-1e6	approx	bs_par	64	0	5
 coast-1e6	approx	cb_par	128	0	5
 coast-1e6	approx	bs_par	128	0	5
+coast-1e6	approx	cb_par_groups	128	0	5
 coast-1e6	approx	cb_slice	1	256	5
 coast-1e6	approx	bs_slice	1	256	5
 coast-1e6	approx	bs_reburn	1	256	5
@@ -302,6 +308,7 @@ small-1e5	coverage	cb_par	64	0	5
 small-1e5	coverage	bs_par	64	0	5
 small-1e5	coverage	cb_par	128	0	5
 small-1e5	coverage	bs_par	128	0	5
+small-1e5	coverage	cb_par_groups	128	0	5
 small-1e5	coverage	cb_slice	1	256	5
 small-1e5	coverage	bs_slice	1	256	5
 small-1e5	coverage	bs_reburn	1	256	5
@@ -354,6 +361,7 @@ small-1e5	approx	cb_par	64	0	5
 small-1e5	approx	bs_par	64	0	5
 small-1e5	approx	cb_par	128	0	5
 small-1e5	approx	bs_par	128	0	5
+small-1e5	approx	cb_par_groups	128	0	5
 small-1e5	approx	cb_slice	1	256	5
 small-1e5	approx	bs_slice	1	256	5
 small-1e5	approx	bs_reburn	1	256	5
@@ -406,6 +414,7 @@ rock-1024m	coverage	cb_par	64	0	5
 rock-1024m	coverage	bs_par	64	0	5
 rock-1024m	coverage	cb_par	128	0	5
 rock-1024m	coverage	bs_par	128	0	5
+rock-1024m	coverage	cb_par_groups	128	0	5
 rock-1024m	coverage	cb_slice	1	256	5
 rock-1024m	coverage	bs_slice	1	256	5
 rock-1024m	coverage	bs_reburn	1	256	5
@@ -458,6 +467,7 @@ rock-1024m	approx	cb_par	64	0	5
 rock-1024m	approx	bs_par	64	0	5
 rock-1024m	approx	cb_par	128	0	5
 rock-1024m	approx	bs_par	128	0	5
+rock-1024m	approx	cb_par_groups	128	0	5
 rock-1024m	approx	cb_slice	1	256	5
 rock-1024m	approx	bs_slice	1	256	5
 rock-1024m	approx	bs_reburn	1	256	5
@@ -510,6 +520,7 @@ rock-512m	coverage	cb_par	64	0	5
 rock-512m	coverage	bs_par	64	0	5
 rock-512m	coverage	cb_par	128	0	5
 rock-512m	coverage	bs_par	128	0	5
+rock-512m	coverage	cb_par_groups	128	0	5
 rock-512m	coverage	cb_slice	1	256	5
 rock-512m	coverage	bs_slice	1	256	5
 rock-512m	coverage	bs_reburn	1	256	5
@@ -562,6 +573,7 @@ rock-512m	approx	cb_par	64	0	5
 rock-512m	approx	bs_par	64	0	5
 rock-512m	approx	cb_par	128	0	5
 rock-512m	approx	bs_par	128	0	5
+rock-512m	approx	cb_par_groups	128	0	5
 rock-512m	approx	cb_slice	1	256	5
 rock-512m	approx	bs_slice	1	256	5
 rock-512m	approx	bs_reburn	1	256	5
@@ -614,6 +626,7 @@ rock-256m	coverage	cb_par	64	0	5
 rock-256m	coverage	bs_par	64	0	5
 rock-256m	coverage	cb_par	128	0	5
 rock-256m	coverage	bs_par	128	0	5
+rock-256m	coverage	cb_par_groups	128	0	5
 rock-256m	coverage	cb_slice	1	256	5
 rock-256m	coverage	bs_slice	1	256	5
 rock-256m	coverage	bs_reburn	1	256	5
@@ -666,6 +679,7 @@ rock-256m	approx	cb_par	64	0	5
 rock-256m	approx	bs_par	64	0	5
 rock-256m	approx	cb_par	128	0	5
 rock-256m	approx	bs_par	128	0	5
+rock-256m	approx	cb_par_groups	128	0	5
 rock-256m	approx	cb_slice	1	256	5
 rock-256m	approx	bs_slice	1	256	5
 rock-256m	approx	bs_reburn	1	256	5
@@ -718,6 +732,7 @@ rock-128m	coverage	cb_par	64	0	5
 rock-128m	coverage	bs_par	64	0	5
 rock-128m	coverage	cb_par	128	0	5
 rock-128m	coverage	bs_par	128	0	5
+rock-128m	coverage	cb_par_groups	128	0	5
 rock-128m	coverage	cb_slice	1	256	5
 rock-128m	coverage	bs_slice	1	256	5
 rock-128m	coverage	bs_reburn	1	256	5
@@ -770,6 +785,7 @@ rock-128m	approx	cb_par	64	0	5
 rock-128m	approx	bs_par	64	0	5
 rock-128m	approx	cb_par	128	0	5
 rock-128m	approx	bs_par	128	0	5
+rock-128m	approx	cb_par_groups	128	0	5
 rock-128m	approx	cb_slice	1	256	5
 rock-128m	approx	bs_slice	1	256	5
 rock-128m	approx	bs_reburn	1	256	5
@@ -822,6 +838,7 @@ rock-64m	coverage	cb_par	64	0	5
 rock-64m	coverage	bs_par	64	0	5
 rock-64m	coverage	cb_par	128	0	5
 rock-64m	coverage	bs_par	128	0	5
+rock-64m	coverage	cb_par_groups	128	0	5
 rock-64m	coverage	cb_slice	1	256	5
 rock-64m	coverage	bs_slice	1	256	5
 rock-64m	coverage	bs_reburn	1	256	5
@@ -874,6 +891,7 @@ rock-64m	approx	cb_par	64	0	5
 rock-64m	approx	bs_par	64	0	5
 rock-64m	approx	cb_par	128	0	5
 rock-64m	approx	bs_par	128	0	5
+rock-64m	approx	cb_par_groups	128	0	5
 rock-64m	approx	cb_slice	1	256	5
 rock-64m	approx	bs_slice	1	256	5
 rock-64m	approx	bs_reburn	1	256	5
@@ -926,6 +944,7 @@ rock-32m	coverage	cb_par	64	0	5
 rock-32m	coverage	bs_par	64	0	5
 rock-32m	coverage	cb_par	128	0	5
 rock-32m	coverage	bs_par	128	0	5
+rock-32m	coverage	cb_par_groups	128	0	5
 rock-32m	coverage	cb_slice	1	256	5
 rock-32m	coverage	bs_slice	1	256	5
 rock-32m	coverage	bs_reburn	1	256	5
@@ -978,6 +997,7 @@ rock-32m	approx	cb_par	64	0	5
 rock-32m	approx	bs_par	64	0	5
 rock-32m	approx	cb_par	128	0	5
 rock-32m	approx	bs_par	128	0	5
+rock-32m	approx	cb_par_groups	128	0	5
 rock-32m	approx	cb_slice	1	256	5
 rock-32m	approx	bs_slice	1	256	5
 rock-32m	approx	bs_reburn	1	256	5
